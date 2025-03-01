@@ -1,6 +1,16 @@
+# Ignore all .jpg files
+*.jpg
+
+# Ignore all .json files
+*.json
+
+# Ignore all .pth files
+*.pth
+
+# Ignore NFS temporary files
 .nfs*
 
-# compilation and distribution
+# Compilation and distribution files
 __pycache__
 _ext
 *.pyc
@@ -12,17 +22,16 @@ build/
 dist/
 wheels/
 
-# pytorch/python/numpy formats
-*.pth
+# PyTorch/Python/Numpy formats
 *.pkl
 *.npy
 *.ts
 model_ts*.txt
 
-# onnx models
+# ONNX models
 *.onnx
 
-# ipython/jupyter notebooks
+# IPython/Jupyter notebooks
 **/.ipynb_checkpoints/
 
 # Editor temporaries
@@ -31,12 +40,12 @@ model_ts*.txt
 *.swp
 *~
 
-# editor settings
+# Editor settings
 .idea
 .vscode
 _darcs
 
-# demo
+# Demo
 **/node_modules
 yarn.lock
 package-lock.json
@@ -44,13 +53,20 @@ package-lock.json
 # CoreML models
 *.mlpackage
 
-# Mac
+# Mac system files
 *DS_Store*
 
-# assets
+# Assets
 assets
 
-# generated files
+# Ignore specific folders
+datasets/phase1/
+datasets/phase1-raw/
+mmdetection/
+wandb/
+edge_sam.egg-info/
+
+# Generated files and folders
 output/
 teacher_embed/
 datasets/

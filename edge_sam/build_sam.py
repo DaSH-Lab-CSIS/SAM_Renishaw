@@ -57,14 +57,27 @@ def build_sam_vit_b(checkpoint=None, **kwargs):
     return _build_sam(image_encoder, checkpoint, **kwargs)
 
 
-def build_edge_sam(checkpoint=None, upsample_mode="bicubic"):
+def build_edge_sam(
+    checkpoint=None, 
+    enable_batch=False, 
+    enable_distill=False, 
+    lora=False,
+    upsample_mode="bicubic",
+    **kwargs
+):
     image_encoder = RepViT(
         arch="m1",
         img_size=image_size,
         upsample_mode=upsample_mode,
         fuse=True
     )
-    return _build_sam(image_encoder, checkpoint)
+    return _build_sam(
+        image_encoder=image_encoder, 
+        checkpoint=checkpoint, 
+        enable_batch=enable_batch,
+        enable_distill=enable_distill,
+        lora=lora
+    )
 
 
 sam_model_registry = {
@@ -136,12 +149,31 @@ def _build_sam(image_encoder, checkpoint, enable_batch=False, enable_distill=Fal
 
     sam = sam_model(**sam_args)
 
+    # NIRVAN CHANGES (TO WORK ON)
+    # For inference (state_dict['model'], strict=True)
     if not enable_distill:
         sam.eval()
         if checkpoint is not None:
-            with open(checkpoint, "rb") as f:
-                state_dict = torch.load(f)
-            print(sam.load_state_dict(state_dict, strict=False))
+            try:
+                with open(checkpoint, "rb") as f:
+                    state_dict = torch.load(f)
+                print(sam.load_state_dict(state_dict['model'], strict=True))
+            except:
+                with open(checkpoint, "rb") as f:
+                    state_dict = torch.load(f)
+                print(sam.load_state_dict(state_dict, strict=True))
+    # For training (else statement)
+    else: 
+        try:
+            if checkpoint is not None:
+                with open(checkpoint, "rb") as f:
+                    state_dict = torch.load(f)
+                print(sam.load_state_dict(state_dict['model'], strict=True)) 
+        except: 
+            if checkpoint is not None:
+                with open(checkpoint, "rb") as f:
+                    state_dict = torch.load(f)
+                print(sam.load_state_dict(state_dict, strict=True)) 
     return sam
 
 
@@ -163,7 +195,7 @@ def build_sam_from_config(
     fuse = config.DISTILL.FUSE
     rpn_head = config.DISTILL.RPN_HEAD
 
-    if model_type in ['vit_h', 'vit_l', 'vit_b']:
+    if model_type in ['vit_h', 'vit_l', 'vit_b', 'edge_sam']:
         return sam_model_registry[model_type](
             checkpoint,
             enable_distill=enable_distill,

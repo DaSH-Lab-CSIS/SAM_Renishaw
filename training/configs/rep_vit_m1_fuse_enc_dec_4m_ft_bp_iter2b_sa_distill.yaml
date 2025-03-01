@@ -1,37 +1,119 @@
-MODEL:
-  TYPE: rep_vit_m1
-  PRETRAINED: output/rep_vit_m1_fuse_sa_distill/default/ckpt_epoch_9.pth
+##################### PROMPT IN LOOP DISTILLATION ########################
 
+# Wanbd Settings
+WANDB:
+  LOG: True
+  RUN_NAME: "Prompt-In-The-Loop"
+  API_KEY: "6273bda0322e6f5b38b888c6a9357d1cabd2ddf6"
+
+# Resume on Encoder Only Distillation output
+# Default workflow
+# MODEL:
+#   TYPE: rep_vit_m1
+#   PRETRAINED: <path to Encoder KD o/p (non _model at end)> 
+# and,
+# When using pre-trained EdgeSAM
+# - TYPE: edge_sam or rep_vit_m1 (default)
+# - PRETRAINED: <path to Encoder KD o/p (non _model at end)> 
+# If RESUME is not blank then load_checkpoint is executed (train.py line 146)
+MODEL:                                        
+  TYPE: edge_sam   
+  # RESUME options                             
+  # output/rep_vit_m1_fuse_sa_distill/default/.dataset1/ckpt_epoch_99.pth        
+  RESUME: output/rep_vit_m1_fuse_sa_distill/default/ckpt_epoch_20.pth 
+  PRETRAINED:   
+
+# Train config 
+# - EPOCHS: vary
 TRAIN:
-  EPOCHS: 5
+  # General Train settings
+  EPOCHS: 200
   BASE_LR: 3.2e-3
   MIN_LR: 3.2e-4
   WARMUP_LR: 3.2e-5
   WARMUP_EPOCHS: 0
   WEIGHT_DECAY: 0.05
   CLIP_GRAD: 0.01
+  # What to train
+  FREEZE_IMAGE_ENCODER: False
+  FREEZE_PROMPT_ENCODER: False
+  FREEZE_MASK_DECODER: False
 
+# Dataset settings
+# - DATA_PATH:    <path to imgs and gt_masks>
+# - LOAD_GT_MASK: load gt_masks in data_loader
+#     |-> Required for prompt-in-the-loop KD
+#     |-> Affects load_gt_mask (build.py > build_dataset > SA1BDataset)
+#     |-> Ingore: when DISTILL.ENCODER_ONLY is True 
+# - IMG_SIZE:     1024 (SA1-B default)
+# - BATCH_SIZE: match it to that passed in CLI
+# Rest all kept default
 DATA:
-  IMG_SIZE: 1024
-  MEAN_AND_STD_TYPE: default
+  # Main settings
   DATASET: sa1b
-  DATA_PATH: datasets/SA-1B/
+  DATA_PATH: datasets/phase2/
+  MEAN_AND_STD_TYPE: default
+  LOAD_GT_MASK: True
+  IMG_SIZE: 1024
+  # Other settings
   NUM_WORKERS: 4
-  BATCH_SIZE: 4
+  BATCH_SIZE: 8
 
+# Knowledge Distillation Settings
+# - ENCODER_ONLY:         True:  activates stage 1 of Training i.e. Encoder-only-KD
+# - INIT_FROM_TEACHER:    False: to use pre-trained Edge-SAM. True: otherwise.  
+#    |-> True : load teacher (SAM ViT-H) mask dec and prompt enc weights. 
+#    |-> False: use existing (EdgeSAM) mask dec and prompt enc weights. 
+#    |-> Igmored: when MODEL.RESUME is not left blank
+# PROMPT_MASK_TO_POINT:   True: generates point prompts from gt_masks
+# Rest all kept default
 DISTILL:
-  EMBED_DIM: 256
-  TEACHER_EMBED_PATH: teacher_embed/sa-1b/
-  NO_RAND: True
-  FUSE: True
+  # KD mode
   ENCODER_ONLY: False
+  # Teacher
+  EMBED_DIM: 256
+  INIT_FROM_TEACHER: False
+  TEACHER_EMBED_PATH: teacher_embed/sa-1b/
+  # Decoder settings
   DECODER_BCE: 5.0
   DECODER_DICE: 5.0
-  MAX_ALLOWED_PROMPTS: 16
-  PROMPT_TYPE: ['box', 'point']
   DECODE_ITERS: 2
+  # Propmpt settings
+  PROMPT_TYPE: ['box', 'point']
+  PROMPT_MASK_TO_POINT: True
   POINTS_PER_REFINE_ITER: 1
-  ITER_ON_BOX: True
+  MAX_ALLOWED_PROMPTS: 16
   MULTIMASK_OUTPUT: 4
+  ITER_ON_BOX: True
+  NO_RAND: True
+  FUSE: True
 
+# Mix precision autocast 
+#  |-> Faster training, lower VRAM usage
+#  |-> Might affect quality
+# Default: False
 AMP_ENABLE: False
+
+# Frequency (epochs) for saving weights
+SAVE_FREQ: 20
+
+####################################################################################
+
+
+# Default KD settings below
+# DISTILL:
+#   EMBED_DIM: 256
+#   TEACHER_EMBED_PATH: teacher_embed/sa-1b/
+#   NO_RAND: True
+#   FUSE: True
+#   ENCODER_ONLY: False
+#   DECODER_BCE: 5.0
+#   DECODER_DICE: 5.0
+#   MAX_ALLOWED_PROMPTS: 16
+#   PROMPT_TYPE: ['box', 'point']
+#   DECODE_ITERS: 2
+#   POINTS_PER_REFINE_ITER: 1
+#   ITER_ON_BOX: True
+#   MULTIMASK_OUTPUT: 4
+
+# AMP_ENABLE: False

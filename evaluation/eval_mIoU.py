@@ -190,7 +190,7 @@ def k_nearest_center(point, boxes, scores, topk=1):
 
 
 @torch.no_grad()
-def main(args):
+def main(args, dataset_name):
     if args.launcher == 'none':
         _distributed = False
     else:
@@ -222,7 +222,7 @@ def main(args):
     sam.eval()
 
     if args.dataset == 'sa':
-        dataset = SA1BDataset(data_root='datasets/SA-1B', split='val', num_samples=args.num_samples,
+        dataset = SA1BDataset(data_root=f'datasets/{dataset_name}', split='val', num_samples=args.num_samples,
                                filter_by_area=None, sort_by_area=args.sort, load_gt_mask=True,
                                max_allowed_prompts=args.max_prompt_bs, fix_seed=True)
         marker_size = 10
@@ -534,4 +534,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
-    main(args)
+    main(args, "phase1")

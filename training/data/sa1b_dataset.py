@@ -229,9 +229,11 @@ class SA1BDataset(torch.utils.data.Dataset):
 
 
 if __name__ == '__main__':
-    data_root = '../../data/SAM/'
-    dataset = SA1BDataset(data_root, num_samples=100, filter_by_area=[64 * 64, None], sort_by_area=False,
-                           load_gt_mask=True, mask_nms_thresh=0.8, box_jitter=True)
+    data_root = './datasets/phase2/'
+    dataset = SA1BDataset(data_root, num_samples=10000, filter_by_area=[64 * 
+                            64, None], sort_by_area=False,
+                            load_gt_mask=True, mask_nms_thresh=0.8, box_jitter=True
+                        )
     num_img = len(dataset)
     print(f'number of images: {num_img}')
 

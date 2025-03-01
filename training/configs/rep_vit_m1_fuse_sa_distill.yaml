@@ -1,25 +1,91 @@
-MODEL:
-  TYPE: rep_vit_m1
-  PRETRAINED: weights/repvit_m1_distill_300.pth
+##################### ENCODER ONLY DISTILLATION ########################
 
+# Wanbd Settings
+WANDB:
+  LOG: True
+  RUN_NAME: "Encoder-Only-KD"
+  API_KEY: "6273bda0322e6f5b38b888c6a9357d1cabd2ddf6"
+
+# Model loading settings
+# Scratch: 
+# - TYPE:   rep_vit_m1
+# - RESUME: 
+# - PRETRAINED: 
+# and,
+# Pretrained (ENCODER ONLY) Rep-VIT:
+# - TYPE:   rep_vit_m1
+# - RESUME: 
+# - PRETRAINED: <path to rep_vit_m1 weights>
+# and,
+# Pretrained ENTIRE Edge-SAM: (train.py line 76)
+# - TYPE:   edge_sam
+# - RESUME: <path to pretrained edge_sam weights>
+# - PRETRAINED: <str: dont care>
+# If RESUME is not blank then load_checkpoint is executed (train.py line 146)
+MODEL:                                        
+  TYPE: edge_sam                                
+  RESUME: weights/edge_sam_3x.pth             
+  PRETRAINED:   
+
+# Training Settings
+# - EPOCHS: vary
 TRAIN:
-  EPOCHS: 10
+  # General Train settings
+  EPOCHS: 100
   BASE_LR: 1.0e-1
   WARMUP_EPOCHS: 5
   WEIGHT_DECAY: 0.01
-  FIND_UNUSED_PARAMETERS: False
+  FIND_UNUSED_PARAMETERS: True
+  # What to train
+  FREEZE_IMAGE_ENCODER: False
+  FREEZE_PROMPT_ENCODER: True
+  FREEZE_MASK_DECODER: True
 
+# Dataset Settings
+# - DATA_PATH:    <path to imgs and gt_masks>
+# - LOAD_GT_MASK: load gt_masks in data_loader
+#     |-> Required for prompt-in-the-loop KD
+#     |-> Ingore: when DISTILL.ENCODER_ONLY is True 
+# - IMG_SIZE:     1024 (SA1-B default)
+# Rest all kept default
 DATA:
-  IMG_SIZE: 1024
+  DATASET: sa1b 
+  DATA_PATH: datasets/phase2/
   MEAN_AND_STD_TYPE: default
-  DATASET: sa1b
-  DATA_PATH: datasets/SA-1B/
+  LOAD_GT_MASK: False
+  IMG_SIZE: 1024
 
+# Knowledge Distillation Settings
+# - ENCODER_ONLY:          True:  activates stage 1 of Training i.e. Encoder-only-KD
+# - INIT_FROM_TEACHER:     False: to use pre-trained Edge-SAM. True: otherwise. 
+#    |-> True : load teacher (SAM ViT-H) mask dec and prompt enc weights. 
+#    |-> False: use existing (EdgeSAM) mask dec and prompt enc weights. 
+#    |-> Igmored: when MODEL.RESUME is not ""
+# - TEACHER_EMBED_PATH:    <path to prepared teacher embeddings>
+# - FREEZE_PROMPT_ENCODER: True: no gradient update for PE)
+#    |-> Overriden by TRAIN.FREEZE_PROMPT_ENCODER
+# - FREEZE_MASK_DECODER:   True: no gradient update for MD
+#    |-> Overriden by TRAIN.FREEZE_MASK_DECODER
+# Rest all kept default
 DISTILL:
+  # KD Mode
+  ENCODER_ONLY: True
+  # Teacher Settings
   EMBED_DIM: 256
+  INIT_FROM_TEACHER: False
   TEACHER_EMBED_PATH: teacher_embed/sa-1b/
+  # General KD settings
+  PIXEL_WISE: 1.0
   NO_RAND: True
   FUSE: True
-  PIXEL_WISE: 1.0
 
+# Mix precision autocast 
+#  |-> Faster training, lower VRAM usage
+#  |-> Might affect quality
+# Default: False
 AMP_ENABLE: False
+
+# Frequency (epochs) for saving weights
+SAVE_FREQ: 20
+
+################################################################################

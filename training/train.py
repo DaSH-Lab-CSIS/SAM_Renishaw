@@ -48,6 +48,10 @@ if VIS:
     from edge_sam.utils.common import make_fig
 
 
+# NIRVAN CHANGES
+debug = True
+
+
 def parse_option():
     parser = argparse.ArgumentParser(
         'EdgeSAM training script', add_help=False)
@@ -62,8 +66,17 @@ def parse_option():
 def main(args, config):
     dataset_train, dataset_val, data_loader_train, data_loader_val = build_loader(config)
 
+    # NIRVAN CHANGES
+    if debug and len(data_loader_train) == 0:
+        raise ValueError("The data_loader_train is empty.")
+
     logger.info(f"Creating model:{config.MODEL.TYPE}/{config.MODEL.NAME}")
-    model = build_sam_from_config(config, None, True, True)
+    
+    # NIRVAN CHANGES (else statement)
+    if not config.MODEL.RESUME:
+        model = build_sam_from_config(config, None, True, True)
+    else: 
+        model = build_sam_from_config(cfg_file=config, checkpoint=config.MODEL.RESUME, enable_distill=True, enable_batch=True)
     if not args.only_cpu:
         model.cuda()
 
@@ -164,6 +177,23 @@ def main(args, config):
         else:
             load_pretrained(config, model_without_ddp, logger)
 
+    # NIRVAN CHANGES
+    # Freeze Image Encoder 
+    if config.TRAIN.FREEZE_IMAGE_ENCODER:
+        for param in model_without_ddp.image_encoder.parameters():
+            param.requires_grad = False
+    # Freeze Prompt Encoder
+    if config.TRAIN.FREEZE_PROMPT_ENCODER:
+        for param in model_without_ddp.prompt_encoder.parameters():
+            param.requires_grad = False
+    # Freeze Mask Decoder
+    if config.TRAIN.FREEZE_MASK_DECODER:
+        for param in model_without_ddp.mask_decoder.parameters():
+            param.requires_grad = False
+    # LORA (default False)
+    if config.DISTILL.LORA:
+        loralib.mark_only_lora_as_trainable(model_without_ddp.mask_decoder)
+    
     n_parameters = sum(p.numel()
                        for p in model.parameters() if p.requires_grad)
     logger.info(f"number of params: {n_parameters}")
@@ -174,6 +204,16 @@ def main(args, config):
     loss_writer = None
     if dist.get_rank() == 0:
         loss_writer = SummaryWriter(f'{config.OUTPUT}/{datetime.datetime.now().strftime("%Y-%m-%d/%H:%M:%S")}')
+        if config.WANDB.LOG:
+            # project settings
+            wandb_project = 'DaSH-Renishaw-Edge_SAM'  
+            current_time = time.localtime()
+            formatted_datetime = time.strftime("%d-%m - %H:%M:%S", current_time)
+            # run name
+            wandb_run_name = f'{config.WANDB.RUN_NAME}-({formatted_datetime})' 
+            # login
+            wandb.login(key=config.WANDB.API_KEY)
+            wandb.init(project=wandb_project, name=wandb_run_name, config=config)
 
     logger.info("Start training")
     start_time = time.time()
@@ -243,14 +283,16 @@ def train_one_epoch_distill_using_saved_embeddings(args, config, model, data_loa
             model_without_ddp = model.module
         else:
             model_without_ddp = model
+        # NIRVAN CHANGES (.image_encoder.)
         if config.DISTILL.ENCODER_ONLY:
-            img_size_pad = (model_without_ddp.img_size, model_without_ddp.img_size)
+            img_size_pad = (model_without_ddp.image_encoder.img_size, model_without_ddp.image_encoder.img_size)
         else:
             img_size_pad = (model_without_ddp.image_encoder.img_size, model_without_ddp.image_encoder.img_size)
             mask_threshold = model_without_ddp.mask_threshold
 
         with torch.cuda.amp.autocast(enabled=config.AMP_ENABLE):
-            if config.DISTILL.ENCODER_ONLY:
+            # NIRVAN CHANGES (and config.MODEL.TYPE != "edge_sam")
+            if config.DISTILL.ENCODER_ONLY and config.MODEL.TYPE != "edge_sam":
                 encoder_embeddings = model(samples)
             else:
                 encoder_embeddings = model(mode='image_encoder', x=samples)
@@ -547,8 +589,11 @@ def train_one_epoch_distill_using_saved_embeddings(args, config, model, data_loa
             display_dict = {'total': total_loss}
             for key in loss:
                 display_dict[key] = loss[key].item()
-
+            # Default
             loss_writer.add_scalars('loss', display_dict, epoch * num_steps + idx)
+            # NIRVAN CHANGES: Wanbd log
+            if config.WANDB.LOG and dist.get_rank() == 0:
+                wandb.log(display_dict)
 
         # this attribute is added by timm on one optimizer (adahessian)
         is_second_order = hasattr(

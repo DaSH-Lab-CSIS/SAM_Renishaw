@@ -65,7 +65,7 @@ def load_checkpoint(config, model, optimizer, lr_scheduler, loss_scaler, logger)
     else:
         checkpoint = torch.load(config.MODEL.RESUME, map_location='cpu')
 
-    if config.MODEL.TYPE == 'vit_h':
+    if config.MODEL.TYPE == 'vit_h' or 'edge_sam':
         new_checkpoint = dict()
         for key in checkpoint.keys():
             if 'image_encoder' in key:
@@ -131,7 +131,7 @@ def load_pretrained(config, model, logger):
     checkpoint = torch.load(config.MODEL.PRETRAINED, map_location='cpu')
 
     if 'state_dict' in checkpoint:
-        state_dict = checkpoint['state_dict']
+        state_dict = checkpoint['state_dict'] 
     elif 'model' in checkpoint:
         state_dict = checkpoint['model']
     else:
@@ -155,6 +155,16 @@ def load_pretrained(config, model, logger):
         msg = model.load_state_dict(state_dict, strict=False)
         logger.warning(msg)
 
+        logger.info(f"=> loaded successfully '{config.MODEL.PRETRAINED}'")
+
+        del checkpoint
+        torch.cuda.empty_cache()
+        return
+    
+    # NIRVAN CHANGES (if statement)
+    if 'edge_sam' in config.MODEL.TYPE:
+        msg = model.load_state_dict(state_dict, strict=True)
+        logger.warning(msg)
         logger.info(f"=> loaded successfully '{config.MODEL.PRETRAINED}'")
 
         del checkpoint

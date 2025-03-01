@@ -78,7 +78,7 @@ class _Reader:
             pkg_idx, value_idx = self.find_item_in_packages(key)
         return self.packages[pkg_idx][value_idx]
 
-    def find_item_in_packages(self, key: str) -> (int, int):
+    def find_item_in_packages(self, key: str) -> tuple[int, int]:
         for pkg_idx, pkg in enumerate(self.packages):
             if not self.packages_visited[pkg_idx]:
                 self.packages_visited[pkg_idx] = True

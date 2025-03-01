@@ -181,6 +181,12 @@ _C.TRAIN.OPTIMIZER.BETAS = (0.9, 0.999)
 _C.TRAIN.OPTIMIZER.MOMENTUM = 0.9
 _C.TRAIN.FIND_UNUSED_PARAMETERS = True
 
+# NIRVAN CHANGES
+# Freeze parts
+_C.TRAIN.FREEZE_IMAGE_ENCODER = False
+_C.TRAIN.FREEZE_PROMPT_ENCODER = False
+_C.TRAIN.FREEZE_MASK_DECODER = False
+
 # -----------------------------------------------------------------------------
 # Misc
 # -----------------------------------------------------------------------------
@@ -203,6 +209,15 @@ _C.EVAL_MODE = False
 _C.THROUGHPUT_MODE = False
 # local rank for DistributedDataParallel, given by command line argument
 _C.LOCAL_RANK = 0
+
+# NIRVAN CHANGES
+# -----------------------------------------------------------------------------
+# Misc
+# -----------------------------------------------------------------------------
+_C.WANDB = CN()
+_C.WANDB.LOG = False
+_C.WANDB.RUN_NAME = "Edge-SAM"
+_C.WANDB.API_KEY = ""
 
 
 def _update_config_from_file(config, cfg_file):

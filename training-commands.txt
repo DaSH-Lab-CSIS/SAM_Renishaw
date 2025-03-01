@@ -1,0 +1,45 @@
+#####################  TRAINING COMMANDS ######################
+
+## RUN ONLY WHEN DATASET IS UPDATED
+(Phase 0) Prepare Teacher Embeddings 
+CUDA_VISIBLE_DEVICES=0,1 python -m torch.distributed.launch --master_port 29501 --nproc_per_node 2 \
+    training/save_embedding.py --cfg training/configs/teacher/sam_vit_huge_sa1b.yaml \
+    --batch-size 2 \
+    --eval \
+    --resume weights/sam_vit_h_4b8939.pth
+
+
+(Phase 1) Encoder-Only Knowledge Distillation
+CUDA_VISIBLE_DEVICES=0,1 python -m torch.distributed.launch --master_port 29501 --nproc_per_node 2 \
+    training/train.py --cfg training/configs/rep_vit_m1_fuse_sa_distill.yaml \
+    --output ./output/ \
+    --batch-size 8 \
+    --use-sync-bn
+
+
+## DO NOT RUN THIS IF RESUMING FROM PRE-TRAINED EDGE_SAM MODEL ## 
+(Post Phase 1) Combine Encoder-Only Model with Mask Dec and Prompt Encoder
+python scripts/convert_weights.py output/rep_vit_m1_fuse_sa_distill/default/ckpt_epoch_19.pth --encoder-only
+
+
+(Phase 2) Prompt-In-The-Loop Distillation
+CUDA_VISIBLE_DEVICES=0,1 python -m torch.distributed.launch --master_port 29501 --nproc_per_node 2 \
+    training/train.py --cfg training/configs/rep_vit_m1_fuse_enc_dec_4m_ft_bp_iter2b_sa_distill.yaml \
+    --output ./output/ \
+    --batch-size 8
+
+##############################################################
+
+
+##################  MISCELLANEOUS COMMANDS ###################
+
+find datasets/phase1-raw/train/gt -type f | wc -l
+find datasets/phase1-raw/test/gt -type f | wc -l
+find datasets/phase1/images/train -type f | wc -l
+find datasets/phase1/images/train -type f | wc -l
+
+##############################################################
+
+
+# KILL TRAINING 
+pkill -9 -f "/home/samhq/miniconda3/envs/EdgeSAM/bin/python"
