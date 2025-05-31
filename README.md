@@ -516,7 +516,6 @@ Below is the overall pipeline diagram:
 
 3. Chen, T., Saxena, V., Li, L., Fleet, D.J., & Hinton, G. (2022). [SAM-HQ: Enhancing Segment Anything Model with Realistic Harmonized Queries](https://arxiv.org/abs/2306.01567). arXiv:2306.01567.
 
-4. Zhang, Z., Wang, P., Li, L., Zhu, X., Lu, J., & Zhang, B. (2023). [PerSAMF: Fast Personalized Segmentation with SAM](https://arxiv.org/abs/2311.10491). arXiv:2311.10491.
 
 
 ## LIMITATIONS
