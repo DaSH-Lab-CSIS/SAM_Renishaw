@@ -457,6 +457,30 @@ Below is the overall pipeline diagram:
 ## LINKS & RESOURCES
 
 
+- **Official Repositories & Project Pages:**  
+  - [PerSAM Repository](https://github.com/ZrrSkywalker/PerSAM)  
+  - [SAMHQ Repository](https://github.com/SysCV/SAMHQ)
+
+- **Research Papers & Foundational Work:**  
+  - [Segment Anything Model (SAM) Paper](https://arxiv.org/abs/2304.02643) – The foundational work that inspired these projects.
+  - [Additional Research on Interactive Segmentation](https://arxiv.org/) – Update with specific papers if available.
+
+- **Export & Deployment Resources:**  
+  - [CoreML Tools Documentation](https://coremltools.readme.io/docs) – For guidance on model export and deployment.
+  - [ONNX Runtime Documentation](https://onnxruntime.ai/docs/) – Instructions and best practices for running models with ONNX Runtime.
+
+- **Community & Support:**  
+  - [Discussion Forum/Issues Page](https://github.com/ZrrSkywalker/Personalize-SAM/issues) – For bug reports and feature requests.
+  - [Discussion Forum/Issues Page](https://github.com/SysCV/sam-hq/issues) – For bug reports and feature requests.
+
+
+
+## LIMITATIONS
+- **Backend & Performance Constraints:**
+  - Project has been validated on specific hardware and software configurations. Running on uncommon setups (e.g., different GPU architectures or non-standard library versions) might lead to unexpected behaviors or slower inference time.
+- **IoU Prediction & Mask Selection:**
+  - While both PerSAM and SAMHQ leverage advanced mask prediction mechanisms, the IoU estimation may not always be robust due to constraints in the current distillation process. Users should verify the mask stability in edge cases.
+
 
 
 ---
