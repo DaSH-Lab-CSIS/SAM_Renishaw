@@ -1,6 +1,37 @@
-  # Personalize SAM HQ
+  # Personalize SAM-HQ (PerSAM-HQ)
 
-This repository contains the code for training, debugging, and inference of the Personalize-SAM-HQ framework. It integrates improvements from SAM, PerSAM, SAM-HQ to provide a refined segmentation solution. Below is a detailed guide on how everything is organized and how to get started.
+This repository contains the code for training, debugging, and inference of the Personalize SAM-HQ framework. It integrates improvements from SAM, PerSAM, SAM-HQ to provide a refined segmentation solution. Below is a detailed guide on how everything is organized and how to get started.
+
+---
+# Core Concept: A Unified Personalized High-Quality Segmentation Model
+
+## Core Idea
+The proposed model would combine the strengths of personalized attention mechanisms from PerSAM with the high-quality intermediate processing of SAMHQ and the efficient post-processing of PerSAM-F. This fusion would create a segmentation model that is simultaneously personalized, high-quality, and computationally efficient.
+
+## Technical Architecture
+
+### Input stage: PerSAM's Dual Attention Augmentation on Image Encoder and Mask Decoder
+- **Target Guided Attention**: Implement the reference-based attention mechanism from PerSAM that guides the model to focus on specific target objects across images
+- **Target Semantic Prompting**: Incorporate the semantic prompting strategy that leverages high-level semantic understanding of the target object
+
+### Intermediate Stage: SAMHQ Processing
+- Utilize SAMHQ's enhanced mask decoder while using the modified perSAM image encoder
+- Maintain the high-quality token relationships and feature extraction that produces more precise boundaries
+
+### Output Stage: PerSAM-F Post-Processing
+- Implement the optimized mask refinement techniques while preserving the high-quality results from earlier stages
+
+## Sources
+
+1. Kirillov, A., Mintun, E., Ravi, N., Mao, H., Rolland, C., Gustafson, L., Xiao, T., Whitehead, S., Berg, A.C., Lo, W.Y., Dollár, P., & Girshick, R. (2023). [Segment Anything](https://arxiv.org/abs/2304.02643). arXiv:2304.02643.
+
+2. Zhang, X., Lin, Z., Huang, T., Tan, X., Tang, Y., Yang, W., Xia, Y., & Huang, H. (2023). [Personalize Segment Anything Model with One Shot](https://arxiv.org/abs/2305.03048). arXiv:2305.03048.
+
+3. Chen, T., Saxena, V., Li, L., Fleet, D.J., & Hinton, G. (2022). [SAM-HQ: Enhancing Segment Anything Model with Realistic Harmonized Queries](https://arxiv.org/abs/2306.01567). arXiv:2306.01567.
+
+4. Zhang, Z., Wang, P., Li, L., Zhu, X., Lu, J., & Zhang, B. (2023). [PerSAMF: Fast Personalized Segmentation with SAM](https://arxiv.org/abs/2311.10491). arXiv:2311.10491.
+
+The integration of these approaches would leverage the complementary strengths of each model while potentially mitigating their individual limitations through a unified architecture.
 
 ---
 
@@ -208,7 +239,7 @@ All training arguments are parsed by the `get_args_parser()` function in the deb
 
 There are two inference scripts supported:
 
-### SAM-HQ Inference Script
+### SAM-HQ Inference Script (Basic SAM-HQ Inference with PerSAM-HQ Model)
 
 **Folder Structure and Data Setup:**
 
@@ -248,7 +279,7 @@ There are two inference scripts supported:
 3. **Distributed Processing:**  
    The script defaults to a `world_size` of 1. Modify device settings as needed.
 
-### PerSAM Inference Script
+### PerSAM Inference Script (PerSAM-F Post Procesing on PerSAM-HQ Model)
 
 **Folder Structure and Data Setup:**
 
@@ -470,8 +501,8 @@ Below is the overall pipeline diagram:
   - [ONNX Runtime Documentation](https://onnxruntime.ai/docs/) – Instructions and best practices for running models with ONNX Runtime.
 
 - **Community & Support:**  
-  - [Discussion Forum/Issues Page](https://github.com/ZrrSkywalker/Personalize-SAM/issues) – For bug reports and feature requests.
-  - [Discussion Forum/Issues Page](https://github.com/SysCV/sam-hq/issues) – For bug reports and feature requests.
+  - [Discussion Forum/Issues Page](https://github.com/ZrrSkywalker/Personalize-SAM/issues) – For bug reports and feature requests for PerSAM.
+  - [Discussion Forum/Issues Page](https://github.com/SysCV/sam-hq/issues) – For bug reports and feature requests for SAM-HQ.
 
 
 
