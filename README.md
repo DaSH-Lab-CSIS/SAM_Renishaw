@@ -72,8 +72,8 @@ conda activate your_env_name
       │   │     ├── gt
       │   │     └── im
       │   ├── Images
-      ├── inference_ren_cleaned.py
-      ├── inference_ren_debug_cleaned.py
+      ├── inference_ren.py
+      ├── inference_ren_debug.py
       ├── input_imgs_renishaw_select
       │   ├── RVP_20240918102156.png
       │   ├── RVP_20240918102418.png
@@ -89,8 +89,8 @@ conda activate your_env_name
       ├── LICENSE.txt
       ├── outputs
       │   ├── outdir_ren
-      ├── persam_f_ren_cleaned.py
-      ├── persam_f_ren_debug_cleaned.py
+      ├── persam_f_ren.py
+      ├── persam_f_ren_debug.py
       ├── per_segment_anything
       │   ├── automatic_mask_generator.py
       │   ├── build_sam.py
@@ -103,8 +103,8 @@ conda activate your_env_name
       │   ├── sam_vit_b_maskdecoder.pth
       ├── README.md
       ├── requirements.txt
-      ├── samhq_debug_script_cleaned.py
-      ├── samhq_script_cleaned.py
+      ├── samhq_debug_script.py
+      ├── samhq_script.py
       ├── sam_vit_b_01ec64.pth
       ├── segment_anything
       │   ├── automatic_mask_generator.py
@@ -132,7 +132,7 @@ conda activate your_env_name
 
 ### Command-Line Arguments (Training Script)
 
-All training arguments are parsed by the `get_args_parser()` function in the debug training script (`samhq_debug_script_cleaned.py`).
+All training arguments are parsed by the `get_args_parser()` function in the debug training script (`samhq_debug_script.py`).
 
 - **`--output` (required):**  
   Output directory to store model checkpoints, CSV logs, and JSON training metrics.  
@@ -185,7 +185,7 @@ All training arguments are parsed by the `get_args_parser()` function in the deb
    Open a terminal, navigate to the repository root, and execute:
 
    ```bash
-   python samhq_debug_script_cleaned.py --output ./outputs --model-type vit_b --checkpoint ./checkpoints/your_checkpoint.pth --device cuda --seed 42 --learning_rate 1e-3 --max_epoch_num 5 --batch_size_train 1 --batch_size_valid 1 --world_size 1
+   python samhq_debug_script.py --output ./outputs --model-type vit_b --checkpoint ./checkpoints/your_checkpoint.pth --device cuda --seed 42 --learning_rate 1e-3 --max_epoch_num 5 --batch_size_train 1 --batch_size_valid 1 --world_size 1
    ```
 
 3. **Distributed Training:**  
@@ -331,7 +331,7 @@ The debug script prints detailed debug messages indicating current object proces
 
 ## ADDITIONAL DEBUG INFORMATION
 
-The debug edition of the training and inference scripts (e.g., samhq_debug_script_cleaned.py) prints extensive information to help diagnose issues:
+The debug edition of the training and inference scripts (e.g., samhq_debug_script.py) prints extensive information to help diagnose issues:
 
 - **GPU Monitoring:**  
   Outputs indicate whether NVML is initialized. Detailed statistics for each GPU (memory usage, utilization, temperature) are printed.
