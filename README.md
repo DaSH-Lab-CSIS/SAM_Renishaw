@@ -3,12 +3,11 @@
 This repository contains the code for training, debugging, and inference of the Personalize SAM-HQ framework. It integrates improvements from SAM, PerSAM, SAM-HQ to provide a refined segmentation solution. Below is a detailed guide on how everything is organized and how to get started.
 
 ---
-# Core Concept: A Unified Personalized High-Quality Segmentation Model
+## Core Concept: A Unified Personalized High-Quality Segmentation Model
 
-## Core Idea
-The proposed model would combine the strengths of personalized attention mechanisms from PerSAM with the high-quality intermediate processing of SAMHQ and the efficient post-processing of PerSAM-F. This fusion would create a segmentation model that is simultaneously personalized, high-quality, and computationally efficient.
+The proposed model would combine the strengths of personalized attention mechanisms from PerSAM with the high-quality intermediate processing of SAMHQ and the efficient post-processing of PerSAM-F. This, in theory, would create a segmentation model that is simultaneously personalized, high-quality, and computationally efficient.
 
-## Technical Architecture
+## Architectural Overview
 
 ### Input stage: PerSAM's Dual Attention Augmentation on Image Encoder and Mask Decoder
 - **Target Guided Attention**: Implement the reference-based attention mechanism from PerSAM that guides the model to focus on specific target objects across images
@@ -20,18 +19,6 @@ The proposed model would combine the strengths of personalized attention mechani
 
 ### Output Stage: PerSAM-F Post-Processing
 - Implement the optimized mask refinement techniques while preserving the high-quality results from earlier stages
-
-## Sources
-
-1. Kirillov, A., Mintun, E., Ravi, N., Mao, H., Rolland, C., Gustafson, L., Xiao, T., Whitehead, S., Berg, A.C., Lo, W.Y., Dollár, P., & Girshick, R. (2023). [Segment Anything](https://arxiv.org/abs/2304.02643). arXiv:2304.02643.
-
-2. Zhang, X., Lin, Z., Huang, T., Tan, X., Tang, Y., Yang, W., Xia, Y., & Huang, H. (2023). [Personalize Segment Anything Model with One Shot](https://arxiv.org/abs/2305.03048). arXiv:2305.03048.
-
-3. Chen, T., Saxena, V., Li, L., Fleet, D.J., & Hinton, G. (2022). [SAM-HQ: Enhancing Segment Anything Model with Realistic Harmonized Queries](https://arxiv.org/abs/2306.01567). arXiv:2306.01567.
-
-4. Zhang, Z., Wang, P., Li, L., Zhu, X., Lu, J., & Zhang, B. (2023). [PerSAMF: Fast Personalized Segmentation with SAM](https://arxiv.org/abs/2311.10491). arXiv:2311.10491.
-
-The integration of these approaches would leverage the complementary strengths of each model while potentially mitigating their individual limitations through a unified architecture.
 
 ---
 
@@ -504,6 +491,16 @@ Below is the overall pipeline diagram:
   - [Discussion Forum/Issues Page](https://github.com/ZrrSkywalker/Personalize-SAM/issues) – For bug reports and feature requests for PerSAM.
   - [Discussion Forum/Issues Page](https://github.com/SysCV/sam-hq/issues) – For bug reports and feature requests for SAM-HQ.
 
+
+## Sources
+
+1. Kirillov, A., Mintun, E., Ravi, N., Mao, H., Rolland, C., Gustafson, L., Xiao, T., Whitehead, S., Berg, A.C., Lo, W.Y., Dollár, P., & Girshick, R. (2023). [Segment Anything](https://arxiv.org/abs/2304.02643). arXiv:2304.02643.
+
+2. Zhang, X., Lin, Z., Huang, T., Tan, X., Tang, Y., Yang, W., Xia, Y., & Huang, H. (2023). [Personalize Segment Anything Model with One Shot](https://arxiv.org/abs/2305.03048). arXiv:2305.03048.
+
+3. Chen, T., Saxena, V., Li, L., Fleet, D.J., & Hinton, G. (2022). [SAM-HQ: Enhancing Segment Anything Model with Realistic Harmonized Queries](https://arxiv.org/abs/2306.01567). arXiv:2306.01567.
+
+4. Zhang, Z., Wang, P., Li, L., Zhu, X., Lu, J., & Zhang, B. (2023). [PerSAMF: Fast Personalized Segmentation with SAM](https://arxiv.org/abs/2311.10491). arXiv:2311.10491.
 
 
 ## LIMITATIONS
