@@ -8,8 +8,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from typing import Any, Dict, List, Tuple
-
+from typing import Any, Dict, List, Tuple, Union
+from .tiny_vit_sam import TinyViT
 from .image_encoder import ImageEncoderViT
 from .mask_decoder import MaskDecoder
 from .prompt_encoder import PromptEncoder
@@ -21,7 +21,7 @@ class Sam(nn.Module):
 
     def __init__(
         self,
-        image_encoder: ImageEncoderViT,
+        image_encoder: Union[ImageEncoderViT, TinyViT],
         prompt_encoder: PromptEncoder,
         mask_decoder: MaskDecoder,
         pixel_mean: List[float] = [123.675, 116.28, 103.53],
@@ -50,11 +50,12 @@ class Sam(nn.Module):
     def device(self) -> Any:
         return self.pixel_mean.device
 
+    @torch.no_grad()
     def forward(
         self,
         batched_input: List[Dict[str, Any]],
         multimask_output: bool,
-        hq_token_only: bool =False,
+        hq_token_only: bool=False,
     ) -> List[Dict[str, torch.Tensor]]:
         """
         Predicts masks end-to-end from provided images and prompts.
@@ -95,8 +96,8 @@ class Sam(nn.Module):
                 to subsequent iterations of prediction.
         """
         input_images = torch.stack([self.preprocess(x["image"]) for x in batched_input], dim=0)
-        image_embeddings, interm_embeddings_2 = self.image_encoder(input_images)
-        interm_embeddings = interm_embeddings_2[0] # early layer
+        image_embeddings, interm_embeddings = self.image_encoder(input_images)
+        interm_embeddings = interm_embeddings[0] # early layer
 
         outputs = []
         for image_record, curr_embedding, curr_interm in zip(batched_input, image_embeddings, interm_embeddings):
@@ -129,13 +130,9 @@ class Sam(nn.Module):
                     "masks": masks,
                     "iou_predictions": iou_predictions,
                     "low_res_logits": low_res_masks,
-                    "encoder_embedding": curr_embedding.unsqueeze(0),
-                    "image_pe": self.prompt_encoder.get_dense_pe(),
-                    "sparse_embeddings":sparse_embeddings,
-                    "dense_embeddings":dense_embeddings, 
                 }
             )
-        return outputs, interm_embeddings_2
+        return outputs
 
     def postprocess_masks(
         self,
@@ -179,4 +176,12 @@ class Sam(nn.Module):
         padw = self.image_encoder.img_size - w
         x = F.pad(x, (0, padw, 0, padh))
         return x
-
+    
+    def preprocess_mask(self, x: torch.Tensor) -> torch.Tensor:
+        """Normalize pixel values and pad to a square input."""
+        # Pad
+        h, w = x.shape[-2:]
+        padh = self.image_encoder.img_size - h
+        padw = self.image_encoder.img_size - w
+        x = F.pad(x, (0, padw, 0, padh))
+        return x

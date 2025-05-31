@@ -95,8 +95,8 @@ class Sam(nn.Module):
                 to subsequent iterations of prediction.
         """
         input_images = torch.stack([self.preprocess(x["image"]) for x in batched_input], dim=0)
-        image_embeddings, interm_embeddings_2 = self.image_encoder(input_images)
-        interm_embeddings = interm_embeddings_2[0] # early layer
+        image_embeddings, interm_embeddings = self.image_encoder(input_images)
+        interm_embeddings = interm_embeddings[0] # early layer
 
         outputs = []
         for image_record, curr_embedding, curr_interm in zip(batched_input, image_embeddings, interm_embeddings):
@@ -129,13 +129,9 @@ class Sam(nn.Module):
                     "masks": masks,
                     "iou_predictions": iou_predictions,
                     "low_res_logits": low_res_masks,
-                    "encoder_embedding": curr_embedding.unsqueeze(0),
-                    "image_pe": self.prompt_encoder.get_dense_pe(),
-                    "sparse_embeddings":sparse_embeddings,
-                    "dense_embeddings":dense_embeddings, 
                 }
             )
-        return outputs, interm_embeddings_2
+        return outputs
 
     def postprocess_masks(
         self,
@@ -179,4 +175,3 @@ class Sam(nn.Module):
         padw = self.image_encoder.img_size - w
         x = F.pad(x, (0, padw, 0, padh))
         return x
-

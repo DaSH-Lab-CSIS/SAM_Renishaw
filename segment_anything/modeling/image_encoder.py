@@ -28,8 +28,8 @@ class ImageEncoderViT(nn.Module):
         qkv_bias: bool = True,
         norm_layer: Type[nn.Module] = nn.LayerNorm,
         act_layer: Type[nn.Module] = nn.GELU,
-        use_abs_pos: bool = True,
-        use_rel_pos: bool = False,
+        use_abs_pos: bool = False,
+        use_rel_pos: bool = True,
         rel_pos_zero_init: bool = True,
         window_size: int = 0,
         global_attn_indexes: Tuple[int, ...] = (),
@@ -52,6 +52,10 @@ class ImageEncoderViT(nn.Module):
             window_size (int): Window size for window attention blocks.
             global_attn_indexes (list): Indexes for blocks using global attention.
         """
+
+        self.use_rel_pos=True
+        self.use_abs_pos=False
+        
         super().__init__()
         self.img_size = img_size
 
@@ -130,7 +134,7 @@ class Block(nn.Module):
         qkv_bias: bool = True,
         norm_layer: Type[nn.Module] = nn.LayerNorm,
         act_layer: Type[nn.Module] = nn.GELU,
-        use_rel_pos: bool = False,
+        use_rel_pos: bool = True,
         rel_pos_zero_init: bool = True,
         window_size: int = 0,
         input_size: Optional[Tuple[int, int]] = None,
@@ -193,7 +197,7 @@ class Attention(nn.Module):
         dim: int,
         num_heads: int = 8,
         qkv_bias: bool = True,
-        use_rel_pos: bool = False,
+        use_rel_pos: bool = True,
         rel_pos_zero_init: bool = True,
         input_size: Optional[Tuple[int, int]] = None,
     ) -> None:
