@@ -1,7 +1,7 @@
   # Personalize SAM HQ
 
 This repository contains the code for training, debugging, and inference of the Personalize-SAM-HQ framework. It integrates improvements from SAM, PerSAM, SAM-HQ to provide a refined segmentation solution. Below is a detailed guide on how everything is organized and how to get started.
-
+(Note: All of the following is tuned for ViT-B, make changes where necessary to use other ViT models.)
 ---
 
 ## INSTALLATION
@@ -40,7 +40,7 @@ conda activate your_env_name
 
 ---
 
-## WORKING
+## SETUP
 
 ### Folder Structure and Data Setup
 
@@ -185,7 +185,7 @@ All training arguments are parsed by the `get_args_parser()` function in the deb
    Open a terminal, navigate to the repository root, and execute:
 
    ```bash
-   python samhq_debug_script.py --output ./outputs --model-type vit_b --checkpoint ./checkpoints/your_checkpoint.pth --device cuda --seed 42 --learning_rate 1e-3 --max_epoch_num 5 --batch_size_train 1 --batch_size_valid 1 --world_size 1
+   python samhq_script.py --output ./outputs --model-type vit_b --checkpoint ./checkpoints/your_checkpoint.pth --device cuda --seed 42 --learning_rate 1e-3 --max_epoch_num 5 --batch_size_train 1 --batch_size_valid 1 --world_size 1
    ```
 
 3. **Distributed Training:**  
@@ -453,6 +453,7 @@ Below is the overall pipeline diagram:
 ---
 
 ## LINKS & RESOURCES
+
 
 
 
