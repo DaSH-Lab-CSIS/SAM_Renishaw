@@ -61,6 +61,22 @@ conda activate your_env_name
 ## SETUP
 
 ### Folder Structure and Data Setup
+**Init Checkpoints**
+- Init checkpoint can be downloaded from [hugging face link](https://huggingface.co/sam-hq-team/sam-hq-training/tree/main/pretrained_checkpoint)
+
+
+```
+        pretrained_checkpoint
+        |____sam_vit_b_maskdecoder.pth
+        |____sam_vit_b_01ec64.pth
+        |____sam_vit_l_maskdecoder.pth
+        |____sam_vit_l_0b3195.pth
+        |____sam_vit_h_maskdecoder.pth
+        |____sam_vit_h_4b8939.pth
+        
+```
+
+
 
 **Input Files:**
 
