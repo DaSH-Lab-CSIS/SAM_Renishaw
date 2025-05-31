@@ -1,7 +1,7 @@
   # Personalize SAM HQ
 
 This repository contains the code for training, debugging, and inference of the Personalize-SAM-HQ framework. It integrates improvements from SAM, PerSAM, SAM-HQ to provide a refined segmentation solution. Below is a detailed guide on how everything is organized and how to get started.
-(Note: All of the following is tuned for ViT-B, make changes where necessary to use other ViT models.)
+
 ---
 
 ## INSTALLATION
@@ -127,6 +127,8 @@ conda activate your_env_name
   ```
 
 ---
+## NOTE
+### (Note: All of the following is tuned for ViT-B, make changes where necessary to use other ViT models.)
 
 ## TRAINING
 
@@ -206,7 +208,7 @@ All training arguments are parsed by the `get_args_parser()` function in the deb
 
 There are two inference scripts supported:
 
-### SAMHQ INFERENCE SCRIPT
+### SAM-HQ Inference Script
 
 **Folder Structure and Data Setup:**
 
@@ -246,7 +248,7 @@ There are two inference scripts supported:
 3. **Distributed Processing:**  
    The script defaults to a `world_size` of 1. Modify device settings as needed.
 
-### PERSAM INFERENCE SCRIPT
+### PerSAM Inference Script
 
 **Folder Structure and Data Setup:**
 
