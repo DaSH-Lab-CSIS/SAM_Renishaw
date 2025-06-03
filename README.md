@@ -33,6 +33,8 @@ cd Personalize-SAM-HQ
 
 ### Setup the Environment
 
+(Please note that different versions of the CUDA Toolkit may not be compatible with certain libraries (e.g., PyTorch, NumPy, etc.) due to specific version dependencies. It is recommended to manage dependencies holistically within a conda environment to ensure compatibility and stability across the software stack.)
+
 We provide a Conda environment file that lists all dependencies. To install run:
 
 ```bash
