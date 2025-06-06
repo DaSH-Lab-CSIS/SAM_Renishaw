@@ -512,11 +512,11 @@ Below is the overall pipeline diagram:
 
 ## Sources
 
-1. Kirillov, A., Mintun, E., Ravi, N., Mao, H., Rolland, C., Gustafson, L., Xiao, T., Whitehead, S., Berg, A.C., Lo, W.Y., Dollár, P., & Girshick, R. (2023). [Segment Anything](https://arxiv.org/abs/2304.02643). arXiv:2304.02643.
+1. Kirillov, A., Mintun, E., Ravi, N., Mao, H., Rolland, C., Gustafson, L., Xiao, T., Whitehead, S., Berg, A.C., Lo, W.Y., Dollár, P., & Girshick, R. (2023). [Segment Anything](https://arxiv.org/abs/2304.02643). arXiv:2304.02643
 
-2. Zhang, X., Lin, Z., Huang, T., Tan, X., Tang, Y., Yang, W., Xia, Y., & Huang, H. (2023). [Personalize Segment Anything Model with One Shot](https://arxiv.org/abs/2305.03048). arXiv:2305.03048.
+2. Zhang, X., Lin, Z., Huang, T., Tan, X., Tang, Y., Yang, W., Xia, Y., & Huang, H. (2023). [Personalize Segment Anything Model with One Shot](https://arxiv.org/abs/2305.03048). arXiv:2305.03048
 
-3. Chen, T., Saxena, V., Li, L., Fleet, D.J., & Hinton, G. (2022). [SAM-HQ: Enhancing Segment Anything Model with Realistic Harmonized Queries](https://arxiv.org/abs/2306.01567). arXiv:2306.01567.
+3. Chen, T., Saxena, V., Li, L., Fleet, D.J., & Hinton, G. (2022). [SAM-HQ: Enhancing Segment Anything Model with Realistic Harmonized Queries](https://arxiv.org/abs/2306.01567). arXiv:2306.01567
 
 
 
