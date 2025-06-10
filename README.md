@@ -450,10 +450,10 @@ Below is the overall pipeline diagram:
                    | Inference Script 1 |       | Inference Script 2 |
                    |      (SAMHQ)       |       |      (PERSAM)      |
                    +--------------------+       +--------------------+
-                                                      |
-                                                      v
-                                             +-------------------+
-                                             |  Output Results   |
+                              |                        |
+                              |                        v
+                              |              +-------------------+
+                              +------------> |  Output Results   |
                                              | (Visualizations,  |
                                              |  Metrics, Logs)   |
                                              +-------------------+
