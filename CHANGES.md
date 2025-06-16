@@ -318,13 +318,21 @@ def predict_masks(
 ## 7. Training Script (samhq_script.py)
 
 ### Change: Enhanced Logging and Checkpointing
-```python
-# Added logging and checkpointing
-```
+
 
 **Purpose**: Improve the training workflow with better progress tracking and model saving.
 
 **Why**: Training a complex model like PerSAM-HQ requires comprehensive logging to monitor the training process and regular checkpointing to save progress.
+
+
+## 8. Inference Path Integration
+
+**Changes implemented:**
+- Created two inference paths:
+  1. **SAM-HQ Style**: Point/box prompts with high-quality output; samhq_script.py
+  2. **PerSAM Style**: Reference-guided segmentation with personalization; inference_ren.py
+- Integrated PerSAM-F's efficient post-processing for faster inference in both modes
+
 
 ## Architectural Integration Summary
 
