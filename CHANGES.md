@@ -3,16 +3,45 @@
 This document details the specific code changes made to integrate PerSAM's personalization capabilities with SAM-HQ's high-quality segmentation into a unified PerSAM-HQ framework. All modifications were made within the per_segment_anything directory.
 
 ## 1. Image Encoder (`image_encoder.py`)
+### Change 1: Modified Position Embedding Handling
 
-### Change: Modified Position Embedding Handling
+
 ```python
-# Modified to ensure compatibility with the rest of the framework
-changed rel_pos; allow only positional embeddings as compatibility issue with rest of framework
+# Modified code in PerSAM-HQ
+class ImageEncoderViT(nn.Module):
+    def __init__(
+        self,
+ # ...existing params...
+        use_abs_pos: bool = False,
+        use_rel_pos: bool = True,
+        rel_pos_zero_init: bool = True,
+ # ...existing params.
+        global_attn_indexes: Tuple[int, ...] = (),
+    ) -> None:
+        # ...existing initialization code...
 ```
 
-**Purpose**: Resolve compatibility issues between PerSAM and SAM-HQ positional embedding processing.
+**Purpose**: Force the use of relative positional embeddings in the ViT encoder.
 
-**Why**: The different handling of positional embeddings in the original codebases caused integration conflicts when combined in the shared architecture.
+**Why**: The original SAM-HQ implementation used absolute positional embeddings only (use_rel_pos=False), while PerSAM relied on relative positional embeddings. Setting this parameter to True ensures compatibility with the rest of the PerSAM architecture and avoids conflicts in the attention mechanisms when integrating the two frameworks.
+
+### Change 2: Modified Return Values to Include Intermediate Embeddings
+
+```python
+def forward(self, x: torch.Tensor) -> torch.Tensor:
+    # Original SAM-HQ return
+    # return self.neck(features)
+    
+    # Modified return for PerSAM-HQ to include intermediate embeddings
+    features = self.backbone(x)
+    interm_embeddings = features[0]  # Extract intermediate embeddings from early layers
+    embeddings = self.neck(features)
+    return embeddings, interm_embeddings
+```
+
+**Purpose**: Extract and return intermediate feature embeddings from early layers of the ViT backbone.
+
+**Why**: These intermediate embeddings are crucial for SAM-HQ's high-quality mask generation, as they contain more detailed spatial information that helps refine mask boundaries.
 
 ## 2. Predictor Module (`predictor.py`)
 
