@@ -329,7 +329,7 @@ def predict_masks(
 
 **Changes implemented:**
 - Created two inference paths:
-  1. **SAM-HQ Style**: Point/box prompts with high-quality output; samhq_script.py
+  1. **SAM-HQ Style**: Point/box prompts with high-quality output; persam_f_ren.py
   2. **PerSAM Style**: Reference-guided segmentation with personalization; inference_ren.py
 - Integrated PerSAM-F's efficient post-processing for faster inference in both modes
 
