@@ -1,122 +1,315 @@
-# Changes Documentation: Integrating PerSAM and SAM-HQ into PerSAM-HQ
+# Changes Documentation: Modifications for PerSAM-HQ Integration
 
-## 1. Key Module Modifications
+This document details the specific code changes made to integrate PerSAM's personalization capabilities with SAM-HQ's high-quality segmentation into a unified PerSAM-HQ framework. All modifications were made within the per_segment_anything directory.
 
-### 1.1 Image Encoder Integration
+## 1. Image Encoder (`image_encoder.py`)
 
-**Changes implemented:**
-- Added SAM-HQ's intermediate embedding extraction capability to PerSAM's image encoder
-- Preserved the forward path to maintain compatibility with both architectures
-- Example modification (Note. there are various other codebase changes as well; this is for illustration only):
-  ```python
-  def forward(self, x):
-      # Original PerSAM processing
-      features = self.backbone(x)
-      # Added SAM-HQ intermediate embedding extraction
-      interm_embeddings = features[0] # From the first layer for HQ processing
-      embeddings = self.neck(features)
-      return embeddings, interm_embeddings  # Return both for dual processing
-  ```
+### Change: Modified Position Embedding Handling
+```python
+# Modified to ensure compatibility with the rest of the framework
+changed rel_pos; allow only positional embeddings as compatibility issue with rest of framework
+```
 
-### 1.2 SAM Model Class Adaptations
+**Purpose**: Resolve compatibility issues between PerSAM and SAM-HQ positional embedding processing.
 
-**Changes implemented:**
-- Combined SAM-HQ's intermediate embedding extraction with PerSAM's mask preprocessing
-- Ensured forward method passes the appropriate data to both processing paths
-- Added handling for PerSAM's target embeddings alongside SAM-HQ's quality tokens
+**Why**: The different handling of positional embeddings in the original codebases caused integration conflicts when combined in the shared architecture.
 
-### 1.3 Transformer Integration
+## 2. Predictor Module (`predictor.py`)
 
-**Changes implemented:**
-- Extended the TwoWayTransformer and TwoWayAttention classes to accept both:
-  - PerSAM's `attn_sim` and `target_embedding` for personalization
-  - SAM-HQ's quality-enhanced token processing
-- Added conditional logic to handle presence/absence of either parameter set
+### Change 1: Extended `set_image()` to Accept Reference Masks
+```python
+def set_image(
+    self,
+    image: np.ndarray,
+    mask: np.ndarray = None,  # Added parameter
+    image_format: str = "RGB",
+    cal_image=True            # Added parameter
+) -> None:
+    # ...existing code...
+    
+    # Transform the mask to the form expected by the model
+    input_mask_torch = None
+    if mask is not None:
+      input_mask = self.transform.apply_image(mask)
+      input_mask_torch = torch.as_tensor(input_mask, device=self.device)
+      input_mask_torch = input_mask_torch.permute(2, 0, 1).contiguous()[None, :, :, :]
 
-### 1.4 Mask Decoder Unification
+    input_mask = self.set_torch_image(input_image_torch, image.shape[:2], transformed_mask=input_mask_torch)
+    return input_mask
+```
 
-**Changes implemented:**
-- Created a unified mask decoder that accommodates both input paradigms:
-  ```python
-  def predict_masks(
-      self,
-      image_embeddings,
-      image_pe,
-      sparse_prompt_embeddings,
-      dense_prompt_embeddings,
-      attn_sim=None,              # From PerSAM
-      target_embedding=None,      # From PerSAM
-      interm_embeddings=None,     # From SAM-HQ
-      hq_token_only=False,        # From SAM-HQ
-  ):
-      # Unified processing logic that handles both pathways
-  ```
+**Purpose**: Enable the model to accept reference masks for personalized segmentation.
 
-### 1.5 Integration of mask_decoder_hq.py
+**Why**: PerSAM requires a reference mask for the personalization process, which wasn't part of the original SAM-HQ implementation.
 
-**Changes implemented:**
-- Incorporated SAM-HQ's specialized HQ decoder into the processing pipeline
-- Modified loading mechanism to conditionally load HQ components based on configuration
-- Ensured backward compatibility with standard SAM and SAM-HQ modes
+### Change 2: Modified `set_torch_image()` to Handle Reference Masks
+```python
+@torch.no_grad()
+def set_torch_image(
+    self,
+    transformed_image: torch.Tensor,
+    original_image_size: Tuple[int, ...],
+    transformed_mask: torch.Tensor = None,  # Added parameter
+    cal_image=True                          # Added parameter
+) -> None:
+    # ...existing code...
+    
+    if cal_image:
+      self.reset_image()
+      self.original_size = original_image_size
+      self.input_size = tuple(transformed_image.shape[-2:])
+      input_image = self.model.preprocess(transformed_image)
+      self.features, self.interm_features = self.model.image_encoder(input_image)
+      self.is_image_set = True
 
-### 1.6 Predictor Class Reconciliation
+    if transformed_mask is not None:
+      input_mask = self.model.preprocess(transformed_mask)  # pad to 1024
+      return input_mask
+```
 
-**Changes implemented:**
-- This required the most extensive integration due to significant differences in method signatures
-- Unified the `set_image` and `set_image_torch` methods to handle:
-  - PerSAM's additional mask parameter and cal_image flag
-  - SAM-HQ's intermediate embedding processing
-- Merged the predict functions to accommodate both parameter sets (SAM-HQ and PerSAM; eg. hq_token_only etc.)
+**Purpose**: Enable conditional processing of image features based on the presence of a reference mask.
 
-## 2. Training Pipeline Integration
+**Why**: Added flexibility to either compute new image embeddings or reuse existing ones, which is essential for efficient personalized segmentation.
 
-**Changes implemented:**
-- Added support for both training modes (PerSAM personalization and SAM-HQ quality enhancement)
-- Incorporated a dual-path training flow that trains:
-  1. Standard SAM components with personalization in early epochs
-  2. HQ-specific components in later epochs (conditionally attached)
+### Change 3: Extended Prediction Methods to Support Attention Similarity and Target Embedding
+```python
+def predict(
+    self,
+    # ...existing parameters...
+    attn_sim = None,           # Added parameter
+    target_embedding = None,   # Added parameter
+    hq_token_only:bool =False, # Added parameter
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    # ...existing code...
+    
+    masks, iou_predictions, low_res_masks, high_res_masks = self.predict_torch(
+        # ...existing parameters...
+        attn_sim=attn_sim,
+        target_embedding=target_embedding,
+        hq_token_only=hq_token_only,
+    )
+    
+    # ...existing code...
 
+@torch.no_grad()
+def predict_torch(
+    self,
+    # ...existing parameters...
+    attn_sim = None,           # Added parameter
+    target_embedding = None,   # Added parameter
+    hq_token_only: bool =False, # Added parameter
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    # ...existing code...
+    
+    # Predict masks
+    low_res_masks, iou_predictions = self.model.mask_decoder(
+        # ...existing parameters...
+        attn_sim=attn_sim,
+        target_embedding=target_embedding,
+        hq_token_only=hq_token_only,
+        interm_embeddings=self.interm_features,
+    )
+    
+    # ...existing code...
+```
 
-## 3. Inference Path Integration
+**Purpose**: Enable the personalization mechanisms from PerSAM (target-guided attention and semantic prompting) in the prediction pipeline.
 
-**Changes implemented:**
-- Created two inference paths:
-  1. **SAM-HQ Style**: Point/box prompts with high-quality output
-  2. **PerSAM Style**: Reference-guided segmentation with personalization
-- Integrated PerSAM-F's efficient post-processing for faster inference in both modes
+**Why**: These parameters allow the predictor to incorporate target similarity information and embedding guidance during mask generation, which are core to PerSAM's personalization approach.
 
-## 4. Technical Challenges Addressed
+## 3. Transformer Module (`transformer.py`)
 
-1. **Parameter Signature Conflicts**: Resolved by creating unified interfaces that accept parameters from both frameworks
-2. **Forward Path Divergence**: Implemented conditional branching based on provided parameters
-3. **Checkpoint Compatibility**: Created loaders that can initialize from either PerSAM or SAM-HQ weights
-4. **Memory Optimization**: Careful management of intermediate embeddings to control memory footprint
+### Change 1: Modified `TwoWayTransformer.forward()` to Support Target Embedding
+```python
+def forward(
+    self,
+    image_embedding: Tensor,
+    image_pe: Tensor,
+    point_embedding: Tensor,
+    attn_sim: Tensor=None,         # Added parameter
+    target_embedding=None          # Added parameter
+) -> Tuple[Tensor, Tensor]:
+    # ...existing code...
+    
+    # Apply transformer blocks and final layernorm
+    for layer in self.layers:
+        if target_embedding is not None:
+            queries += target_embedding
+        queries, keys = layer(
+            queries=queries,
+            keys=keys,
+            query_pe=point_embedding,
+            key_pe=image_pe,
+            attn_sim=attn_sim,
+        )
+    
+    # Apply the final attention layer from the points to the image
+    q = queries + point_embedding
+    k = keys + image_pe
 
-## 5. Performance Optimizations
+    if target_embedding is not None:
+        q += target_embedding
+    # ...existing code...
+```
 
-- Implemented lazy loading of HQ components when not needed
-- Added memory-efficient processing of intermediate embeddings
+**Purpose**: Incorporate target embedding information at multiple stages of the transformer processing.
 
-# Technical Note: Predictor Module Usage in Inference Scripts
+**Why**: This enables the semantic prompting aspect of PerSAM by injecting the target embedding information before each transformer layer and final attention computation.
 
-When working with the PerSAM-HQ framework, it's important to understand that each inference script uses a different predictor module architecture:
+### Change 2: Modified `TwoWayAttentionBlock.forward()` to Accept Attention Similarity
+```python
+def forward(
+    self, queries: Tensor, keys: Tensor, query_pe: Tensor, key_pe: Tensor, attn_sim: Tensor
+) -> Tuple[Tensor, Tensor]:
+    # ...existing code...
+    
+    # Cross attention block, tokens attending to image embedding
+    q = queries + query_pe
+    k = keys + key_pe
+    attn_out = self.cross_attn_token_to_image(q=q, k=k, v=keys, attn_sim=attn_sim)
+    # ...existing code...
+```
 
-## Predictor Module Implementation
+**Purpose**: Pass the attention similarity information to the cross-attention mechanism.
 
-The integration of PerSAM and SAM-HQ required maintaining two separate predictor implementations due to significant architectural differences:
+**Why**: This enables the target-guided attention aspect of PerSAM by influencing the cross-attention maps based on similarity to the target object.
 
-1. **SAM-HQ Inference Script (`inference_ren.py`)**:
-   - Uses the SAM-HQ predictor module from the segment_anything package
-   - Optimized for point/box prompting with high-quality token processing
-   - Handles intermediate embeddings for boundary refinement
-   - Designed for single-image, prompt-based inference workflow
+### Change 3: Extended `Attention.forward()` to Modify Attention Maps
+```python
+def forward(self, q: Tensor, k: Tensor, v: Tensor, attn_sim: Tensor = None) -> Tensor:
+    # ...existing code...
+    
+    # Attention
+    _, _, _, c_per_head = q.shape
+    attn = q @ k.permute(0, 1, 3, 2)  # B x N_heads x N_tokens x N_tokens
+    attn = attn / math.sqrt(c_per_head)
+    attn = torch.softmax(attn, dim=-1)
 
-2. **PerSAM Inference Script (`persam_f_ren.py`)**:
-   - Uses the PerSAM predictor module from the per_segment_anything package
-   - Implements target-guided attention and semantic prompting
-   - Accepts reference masks and calculates similarity with target images
-   - Designed for reference-based personalization workflow
+    if attn_sim is not None:
+        attn = attn + attn_sim
+        attn = torch.softmax(attn, dim=-1)
+    
+    # ...existing code...
+```
 
-This dual-predictor approach maintains compatibility with both the original codebases while allowing the integrated model to leverage both high-quality segmentation and personalization capabilities.
+**Purpose**: Modify attention maps based on the provided attention similarity.
 
----
+**Why**: This is the core mechanism of target-guided attention in PerSAM, where the attention weights are adjusted based on similarity to the target object.
+
+## 4. SAM Model (`sam.py`)
+
+### Change: Extended `forward()` to Handle Intermediate Embeddings
+```python
+def forward(
+    self,
+    batched_input: List[Dict[str, Any]],
+    multimask_output: bool,
+    hq_token_only: bool =False,  # Added parameter
+) -> List[Dict[str, torch.Tensor]]:
+    # ...existing code...
+    
+    input_images = torch.stack([self.preprocess(x["image"]) for x in batched_input], dim=0)
+    image_embeddings, interm_embeddings_2 = self.image_encoder(input_images)
+    interm_embeddings = interm_embeddings_2[0] # early layer
+    
+    # ...existing code...
+    
+    low_res_masks, iou_predictions = self.mask_decoder(
+        # ...existing parameters...
+        hq_token_only=hq_token_only,
+        interm_embeddings=curr_interm.unsqueeze(0).unsqueeze(0),
+    )
+    
+    # ...existing code...
+    
+    outputs.append(
+        {
+            # ...existing keys...
+            "encoder_embedding": curr_embedding.unsqueeze(0),
+            "image_pe": self.prompt_encoder.get_dense_pe(),
+            "sparse_embeddings":sparse_embeddings,
+            "dense_embeddings":dense_embeddings, 
+        }
+    )
+    return outputs, interm_embeddings_2
+```
+
+**Purpose**: Extract and pass intermediate embeddings from the image encoder to the mask decoder, and return additional information needed for personalization.
+
+**Why**: SAM-HQ relies on intermediate embeddings for high-quality mask generation, while PerSAM needs the additional embedding information for transfer and personalization between images.
+
+## 5. Mask Decoder (`mask_decoder.py`)
+
+### Change: Extended Forward Methods to Support Personalization and High-Quality Features
+```python
+def forward(
+    self,
+    # ...existing parameters...
+    attn_sim=None,             # Added parameter
+    target_embedding=None,     # Added parameter
+    hq_token_only: bool=False, # Added parameter
+    interm_embeddings: torch.Tensor=None, # Added parameter
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    # ...existing code...
+    masks, iou_pred = self.predict_masks(
+        # ...existing parameters...
+        attn_sim=attn_sim,
+        target_embedding=target_embedding
+    )
+    # ...existing code...
+
+def predict_masks(
+    self,
+    # ...existing parameters...
+    attn_sim=None,           # Added parameter
+    target_embedding=None    # Added parameter
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    # ...existing code...
+    
+    # Run the transformer
+    hs, src = self.transformer(src, pos_src, tokens, attn_sim, target_embedding)
+    # ...existing code...
+```
+
+**Purpose**: Enable the mask decoder to leverage both the personalization information from PerSAM and the high-quality features from SAM-HQ.
+
+**Why**: This creates the bridge between personalization (through attention similarity and target embeddings) and high-quality segmentation (through intermediate embeddings), enabling the unified functionality of PerSAM-HQ.
+
+## 6. High-Quality Mask Decoder (`mask_decoder_hq.py`)
+
+### Change: Made Compatible with PerSAM
+```python
+# Modified to be compatible with perSAM
+```
+
+**Purpose**: Ensure the SAM-HQ specific mask decoder can work within the personalized segmentation framework.
+
+**Why**: The original mask_decoder_hq.py was designed only for SAM-HQ and needed modifications to support the additional parameters and processing needed for personalization.
+
+## 7. Training Script (samhq_script.py)
+
+### Change: Enhanced Logging and Checkpointing
+```python
+# Added logging and checkpointing
+```
+
+**Purpose**: Improve the training workflow with better progress tracking and model saving.
+
+**Why**: Training a complex model like PerSAM-HQ requires comprehensive logging to monitor the training process and regular checkpointing to save progress.
+
+## Architectural Integration Summary
+
+The code modifications achieve two primary technical goals:
+
+1. **Enable Dual Information Flow**:
+   - Personalization information (attention similarity, target embeddings) flows from PerSAM's reference-based mechanisms to guide the segmentation process
+   - High-quality information (intermediate embeddings) flows from SAM-HQ's enhanced image encoder to improve mask boundary precision
+
+2. **Create Unified Processing Pipeline**:
+   - The predictor module can now accept reference masks for personalization and provide high-quality outputs
+   - The transformer and attention mechanisms incorporate both personalization guidance and high-quality feature processing
+   - The mask decoder integrates both personalization cues and high-quality token information
+
+These changes allow PerSAM-HQ to perform personalized, high-quality segmentation in a single, unified framework while maintaining compatibility with the original codebases for evaluation and comparison.
+
+Similar code found with 1 license type
